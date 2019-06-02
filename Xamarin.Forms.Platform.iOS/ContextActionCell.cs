@@ -5,8 +5,6 @@ using System.ComponentModel;
 using Foundation;
 using UIKit;
 using Xamarin.Forms.Platform.iOS.Resources;
-using Xamarin.Forms.PlatformConfiguration.iOSSpecific;
-using static Xamarin.Forms.PlatformConfiguration.iOSSpecific.Cell;
 using PointF = CoreGraphics.CGPoint;
 using RectangleF = CoreGraphics.CGRect;
 using SizeF = CoreGraphics.CGSize;
@@ -420,25 +418,8 @@ namespace Xamarin.Forms.Platform.iOS
 			else
 				button.SetBackgroundImage(DestructiveBackground, UIControlState.Normal);
 
-			var displayType = _cell.On<PlatformConfiguration.iOS>().DefaultContextActionCellDisplay();
-			if (displayType == ContextActionDisplay.Icon)
-			{
-				var handler = Internals.Registrar.Registered.GetHandlerForObject<IImageSourceHandler>(item.IconImageSource);
-				if (handler != null)
-				{
-					var image = handler.LoadImageAsync(item.IconImageSource).GetAwaiter().GetResult();
-					image = image.ImageWithRenderingMode(UIImageRenderingMode.AlwaysTemplate); //Should the image color be changed?
-					button.ImageView.ContentMode = UIViewContentMode.ScaleAspectFit;
-					button.ImageView.TintColor = button.TitleColor(UIControlState.Normal);
-					button.SetImage(image, UIControlState.Normal);
-					button.ImageEdgeInsets = new UIEdgeInsets(5, 15, 5, 15);
-				}
-			}
-			else
-			{
-				button.SetTitle(item.Text, UIControlState.Normal);
-				button.TitleEdgeInsets = new UIEdgeInsets(0, 15, 0, 15);
-			}
+			button.SetTitle(item.Text, UIControlState.Normal);
+			button.TitleEdgeInsets = new UIEdgeInsets(0, 15, 0, 15);
 
 			button.Enabled = item.IsEnabled;
 
@@ -578,11 +559,7 @@ namespace Xamarin.Forms.Platform.iOS
 
 				var button = GetButton(item);
 				button.Tag = i;
-
-				var imageWidth = button.ImageView.SizeThatFits(new SizeF(width, height)).Width;
-				var titleWidth = button.TitleLabel.SizeThatFits(new SizeF(width, height)).Width;
-
-				var buttonWidth = (nfloat)Math.Max(imageWidth, titleWidth) + 30;
+				var buttonWidth = button.TitleLabel.SizeThatFits(new SizeF(width, height)).Width + 30;
 				if (buttonWidth > largestWidth)
 					largestWidth = buttonWidth;
 
@@ -608,25 +585,10 @@ namespace Xamarin.Forms.Platform.iOS
 
 				var button = new UIButton(new RectangleF(0, 0, largestWidth, height));
 				button.SetBackgroundImage(NormalBackground, UIControlState.Normal);
+				button.TitleEdgeInsets = new UIEdgeInsets(0, 15, 0, 15);
+				button.SetTitle(StringResources.More, UIControlState.Normal);
 
-				var displayType = _cell.On<PlatformConfiguration.iOS>().DefaultContextActionCellDisplay();
-				if (displayType == ContextActionDisplay.Icon)
-				{
-					button.ImageView.ContentMode = UIViewContentMode.ScaleAspectFit;
-					button.ImageView.TintColor = button.TitleColor(UIControlState.Normal);
-					button.SetImage(GetMoreImage(), UIControlState.Normal);
-					button.ImageEdgeInsets = new UIEdgeInsets(5, 15, 5, 15);
-				}
-				else
-				{
-					button.TitleEdgeInsets = new UIEdgeInsets(0, 15, 0, 15);
-					button.SetTitle(StringResources.More, UIControlState.Normal);
-				}
-
-				var moreImageWidth = button.ImageView.SizeThatFits(new SizeF(width, height)).Width;
-				var moreTitleWidth = button.TitleLabel.SizeThatFits(new SizeF(width, height)).Width;
-
-				var moreWidth = (nfloat)Math.Max(moreImageWidth, moreTitleWidth) + 30;
+				var moreWidth = button.TitleLabel.SizeThatFits(new SizeF(width, height)).Width + 30;
 				if (moreWidth > largestWidth)
 				{
 					largestWidth = moreWidth;
@@ -677,20 +639,6 @@ namespace Xamarin.Forms.Platform.iOS
 			}
 
 			return null;
-		}
-
-		//Should this really be this cheaty? Or is there a better way to obtain the native more icon?
-		//Note: Using icons improperly may violate iOS Human Interface Guidelines and cause the app to be rejected from App Store
-		UIImage GetMoreImage()
-		{
-			var tabBar = new UITabBar();
-			var item = new UITabBarItem(UITabBarSystemItem.More, 0);
-			tabBar.Items = new[] { item };
-
-			var itemView = tabBar.Subviews[0];
-			var imageView = itemView.Subviews[0] as UIImageView;
-
-			return imageView?.Image.ImageWithRenderingMode(UIImageRenderingMode.AlwaysTemplate);
 		}
 
 		static void SetupSelection(UITableView table)
